@@ -3,7 +3,8 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import { connectDB } from './db'
 import hobbyRoutes from './routes/hobbyRoutes'
-import authRoutes from './routes/authRoutes'
+import authRoutes from './routes/authRoutes';
+import tagRoutes from './routes/tagRoutes'
 
 // 환경변수 불러오기 (.env 파일)
 dotenv.config()
@@ -29,6 +30,7 @@ app.get('/', (req, res) => {
 // 취미 API 라우터 등록
 app.use('/api/hobbies', hobbyRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/tags', tagRoutes)
 
 // DB 연결 후 서버 시작
 connectDB().then(() => {

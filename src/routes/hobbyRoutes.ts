@@ -9,11 +9,23 @@ router.get('/', async (req, res) => {
   res.json(hobbies)
 })
 
-// POST create
-router.post('/', async (req, res) => {
-  const hobby = new Hobby(req.body)
-  const saved = await hobby.save()
-  res.status(201).json(saved)
+router.post('/', async (req: any, res: any) => {
+  const { name, tagId, description, locationType, location } = req.body
+
+  if (!name || !tagId || !description) {
+    return res.status(400).json({ error: '필수 값 누락' })
+  }
+
+  const hobby = new Hobby({
+    name,
+    tag: tagId,
+    description,
+    locationType,
+    location,
+  })
+
+  await hobby.save()
+  res.status(201).json({ message: '모임이 저장되었습니다.' })
 })
 
 // GET by ID

@@ -1,26 +1,42 @@
 import express from 'express'
 import { Tag } from '../models/Tag'
+import { ApiError } from '../lib/error/ApiError'
 
 const router = express.Router()
 
-// 🔍 자동완성용 태그 목록 (쿼리로 검색)
-router.get('/', async (req, res) => {
-  const query = req.query.q || ''
-  const regex = new RegExp(String(query), 'i') // 'i'는 대소문자 무시
-  const tags = await Tag.find({ name: regex }).limit(10)
-  res.json(tags)
+// ✅ 태그 자동완성 또는 인기 태그 조회
+router.get('/', async (req: any, res: any, next) => {
+  try {
+    const query = req.query.q
+
+    if (query) {
+      const regex = new RegExp(String(query), 'i')
+      const tags = await Tag.find({ name: regex }).limit(10)
+      return res.json(tags)
+    }
+
+    const tags = await Tag.find().sort({ createdAt: -1 }).limit(10)
+    res.json(tags)
+  } catch (err) {
+    next(err)
+  }
 })
 
-router.post('/', async (req: any, res: any) => {
-  const { name } = req.body
-  if (!name) return res.status(400).json({ error: '태그 이름이 필요합니다.' })
+// ✅ 태그 등록
+router.post('/', async (req: any, res: any, next) => {
+  try {
+    const { name } = req.body
+    if (!name) throw new ApiError(400, '태그 이름이 필요합니다.')
 
-  const existing = await Tag.findOne({ name })
-  if (existing) return res.json(existing)
+    const existing = await Tag.findOne({ name })
+    if (existing) return res.json(existing)
 
-  const tag = new Tag({ name })
-  await tag.save()
-  res.status(201).json(tag)
+    const tag = new Tag({ name })
+    await tag.save()
+    res.status(201).json(tag)
+  } catch (err) {
+    next(err)
+  }
 })
 
 export default router

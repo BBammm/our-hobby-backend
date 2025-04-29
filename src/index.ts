@@ -6,6 +6,8 @@ import hobbyRoutes from './routes/hobbyRoutes'
 import authRoutes from './routes/authRoutes';
 import tagRoutes from './routes/tagRoutes'
 import { errorHandler } from './lib/error/errorHandler';
+import geocodeRoutes from './routes/geocodeRoutes'
+
 
 // 환경변수 불러오기 (.env 파일)
 dotenv.config()
@@ -32,6 +34,7 @@ app.get('/', (req, res) => {
 app.use('/api/hobbies', hobbyRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/tags', tagRoutes)
+app.use('/api/geocode', geocodeRoutes)
 
 app.use(errorHandler)
 

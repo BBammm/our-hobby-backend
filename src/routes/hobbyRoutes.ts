@@ -1,12 +1,37 @@
-import express from 'express'
+'use strict'
+
+import express, { RequestHandler, Request, Response } from 'express'
 import { Hobby } from '../models/Hobby'
 import { ApiError } from '../lib/error/ApiError'
 import mongoose from 'mongoose'
 
 const router = express.Router()
 
+// 타입 정의
+interface CreateHobbyBody {
+  name: string
+  tagId: string
+  description: string
+  locationType: 'offline' | 'home'
+  location: {
+    type: 'Point'
+    coordinates: [number, number]
+    address: string
+  }
+  creator: string
+}
+
+interface SearchQuery {
+  lat?: string
+  lng?: string
+}
+
+interface UserQuery {
+  userId?: string
+}
+
 // ✅ GET 전체 취미 리스트
-router.get('/', async (req, res, next) => {
+router.get('/', async (req: Request, res: Response, next) => {
   try {
     const hobbies = await Hobby.find()
     res.json(hobbies)
@@ -16,7 +41,7 @@ router.get('/', async (req, res, next) => {
 })
 
 // ✅ POST 새로운 취미 등록
-router.post('/', async (req, res, next) => {
+const createHobbyHandler: RequestHandler<{}, any, CreateHobbyBody> = async (req, res, next) => {
   try {
     const { name, tagId, description, locationType, location, creator } = req.body
 
@@ -30,7 +55,7 @@ router.post('/', async (req, res, next) => {
       description,
       locationType,
       location,
-      creator, // ✅ 사용자 ID 저장
+      creator,
     })
 
     await hobby.save()
@@ -41,11 +66,13 @@ router.post('/', async (req, res, next) => {
     }
     next(err)
   }
-})
+}
+router.post('/', createHobbyHandler)
 
-router.get('/mine', async (req, res, next) => {
+// ✅ GET 내가 만든 취미
+router.get('/mine', async (req: Request<{}, {}, {}, UserQuery>, res, next) => {
   try {
-    const userId = req.query.userId
+    const { userId } = req.query
     if (!userId) throw new ApiError(400, '사용자 ID가 필요합니다.')
 
     const myHobbies = await Hobby.find({ creator: userId }).sort({ createdAt: -1 })
@@ -55,7 +82,8 @@ router.get('/mine', async (req, res, next) => {
   }
 })
 
-router.get('/search', async (req: any, res: any, next) => {
+// ✅ GET 위치 기반 취미 검색
+router.get('/search', async (req: Request<{}, {}, {}, SearchQuery>, res, next) => {
   try {
     const { lat, lng } = req.query
 
@@ -77,7 +105,7 @@ router.get('/search', async (req: any, res: any, next) => {
             type: 'Point',
             coordinates: [longitude, latitude],
           },
-          $maxDistance: 3000, // 반경 3km 안
+          $maxDistance: 3000,
         }
       }
     })
@@ -88,7 +116,8 @@ router.get('/search', async (req: any, res: any, next) => {
   }
 })
 
-router.get('/:id', async (req, res, next) => {
+// ✅ GET 상세 취미 by ID
+router.get('/:id', async (req: Request, res, next) => {
   try {
     const { id } = req.params
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -103,6 +132,5 @@ router.get('/:id', async (req, res, next) => {
     next(err)
   }
 })
-
 
 export default router

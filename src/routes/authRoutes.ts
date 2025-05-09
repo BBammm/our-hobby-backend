@@ -1,13 +1,20 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { User } from '../models/Users'
-import express from 'express'
+import express, { Request, Response } from 'express'
 import { ApiError } from '../lib/error/ApiError'
 
 const router = express.Router()
 
+// ✅ 회원가입 타입
+interface RegisterRequestBody {
+  email: string
+  password: string
+  nickname: string
+}
+
 // 🔐 회원가입
-router.post('/register', async (req, res, next) => {
+router.post('/register', async (req: Request<{}, {}, RegisterRequestBody>, res: Response, next) => {
   try {
     const { email, password, nickname } = req.body
 
@@ -21,7 +28,6 @@ router.post('/register', async (req, res, next) => {
     }
 
     const hashed = await bcrypt.hash(password, 10)
-
     const newUser = new User({ email, password: hashed, nickname })
     await newUser.save()
 
@@ -31,8 +37,14 @@ router.post('/register', async (req, res, next) => {
   }
 })
 
+// ✅ 로그인 타입
+interface LoginRequestBody {
+  email: string
+  password: string
+}
+
 // 🔑 로그인
-router.post('/login', async (req, res, next) => {
+router.post('/login', async (req: Request<{}, {}, LoginRequestBody>, res: Response, next) => {
   try {
     const { email, password } = req.body
 
